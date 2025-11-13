@@ -3,82 +3,62 @@ from datetime import datetime
 import pytz
 
 def index(request):
-   
-    indian_city_to_timezone = {
-        "Delhi": "Asia/Kolkata",
-        "Mumbai": "Asia/Kolkata",
-        "Bangalore": "Asia/Kolkata",
-        "Chennai": "Asia/Kolkata",
-        "Kolkata": "Asia/Kolkata",
-        "Hyderabad": "Asia/Kolkata",
-        "Bhopal": "Asia/Kolkata",
-        "Pune": "Asia/Kolkata",
-        "Ahmedabad": "Asia/Kolkata",
-        "Indore": "Asia/Kolkata"
-    }
+    indian_cities = [
+        "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata",
+        "Hyderabad", "Bhopal", "Pune", "Ahmedabad", "Indore"
+    ]
 
-    
-    boston_related_cities = {
+    city_to_timezone = {
         "Boston": "America/New_York",
-        "Cambridge": "America/New_York",
-        "Quincy": "America/New_York",
-        "Worcester": "America/New_York",
-        "Lowell": "America/New_York",
-        "Springfield (MA)": "America/New_York",
-        "Newton": "America/New_York",
-        "Salem (MA)": "America/New_York",
-        "Brockton": "America/New_York",
-        "Somerville": "America/New_York"
+        "New York": "America/New_York",
+        "London": "Europe/London",
+        "Tokyo": "Asia/Tokyo",
+        "Sydney": "Australia/Sydney",
+        "Dubai": "Asia/Dubai",
+        "Paris": "Europe/Paris",
+        "UTC": "UTC"
     }
-    all_world_timezones = set(pytz.all_timezones)
-    for city_tz in boston_related_cities.values():
-        all_world_timezones.add(city_tz)
 
-    converted_time = ""
-    error = ""
+    target_cities = list(city_to_timezone.keys()) + sorted(pytz.all_timezones)
+
+    result_time = None
+    error_message = None
+    selected_from = None
+    selected_to = None
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     if request.method == "POST":
+        selected_from = request.POST.get("from_city")
+        selected_to = request.POST.get("to_city")
+        input_time_str = request.POST.get("input_time")
+
         try:
-           
-            source_city = request.POST.get("indian_city")
-            target_city = request.POST.get("target_city")
-            input_time_str = request.POST.get("time_input")
-
-            
+            india_tz = pytz.timezone("Asia/Kolkata")
             input_time = datetime.strptime(input_time_str, "%Y-%m-%d %H:%M")
+            localized_time = india_tz.localize(input_time)
 
-            source_tz_name = indian_city_to_timezone.get(source_city, "Asia/Kolkata")
-
-           
-            if target_city in boston_related_cities:
-                target_tz_name = boston_related_cities[target_city]
-            elif target_city in pytz.all_timezones:
-                target_tz_name = target_city
+            if selected_to in city_to_timezone:
+                target_tz_name = city_to_timezone[selected_to]
+            elif selected_to in pytz.all_timezones:
+                target_tz_name = selected_to
             else:
-                error = "Invalid city or timezone selected."
-                target_tz_name = None
+                raise ValueError("Invalid city or timezone selected.")
 
-            if target_tz_name:
-                source_tz = pytz.timezone(source_tz_name)
-                target_tz = pytz.timezone(target_tz_name)
-
-                localized_time = source_tz.localize(input_time)
-                converted = localized_time.astimezone(target_tz)
-
-                converted_time = converted.strftime("%Y-%m-%d %H:%M:%S")
+            target_tz = pytz.timezone(target_tz_name)
+            converted_time = localized_time.astimezone(target_tz)
+            result_time = f"Converted Time in {selected_to} (from {selected_from}):\n{converted_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
         except Exception as e:
-            error = f"Error: {e}"
-
- 
-    world_timezones_list = list(boston_related_cities.keys()) + sorted(pytz.all_timezones)
+            error_message = f"Error: {e}"
 
     context = {
-        "indian_cities": list(indian_city_to_timezone.keys()),
-        "world_timezones": world_timezones_list,
-        "converted_time": converted_time,
-        "error": error,
-        "current_time": datetime.now().strftime("%Y-%m-%d %H:%M")
+        "indian_cities": indian_cities,
+        "target_cities": target_cities,
+        "result_time": result_time,
+        "error_message": error_message,
+        "current_time": current_time,
+        "selected_from": selected_from,
+        "selected_to": selected_to,
     }
 
     return render(request, "index.html", context)
