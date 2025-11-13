@@ -1,83 +1,174 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>🌏 World Time Converter</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>World Time Conversion 🌍</title>
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            text-align: center;
-            padding: 30px;
+            font-family: 'Arial', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .container {
-            max-width: 700px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+
+        h1 {
+            margin-top: 10px;
+            color: #333;
         }
-        img {
+
+        form {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        select, input[type="datetime-local"], button {
+            padding: 8px 12px;
             border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
         }
-        select, input {
-            border-radius: 8px !important;
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
         }
-        .btn-primary {
-            background: #ffca28;
-            color: black;
-            border: none;
+
+        button:hover {
+            background-color: #45a049;
         }
-        .btn-primary:hover {
-            background: #ffd54f;
+
+        #live_result {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            width: 300px;
+            text-align: center;
+        }
+
+        #live_result p {
+            font-size: 16px;
+            margin: 8px 0;
+        }
+
+        /* Logo container */
+        #logo {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #logo img {
+            height: 80px;
+            width: auto;
         }
     </style>
+
+    <script>
+        function startLiveClock() {
+            const fromCitySelect = document.getElementById("from_city");
+            const toCitySelect = document.getElementById("to_city");
+            const resultDiv = document.getElementById("live_result");
+
+            const cityTimezones = {
+                "Delhi": "Asia/Kolkata",
+                "Mumbai": "Asia/Kolkata",
+                "Bangalore": "Asia/Kolkata",
+                "Chennai": "Asia/Kolkata",
+                "Kolkata": "Asia/Kolkata",
+                "Hyderabad": "Asia/Kolkata",
+                "Bhopal": "Asia/Kolkata",
+                "Pune": "Asia/Kolkata",
+                "Ahmedabad": "Asia/Kolkata",
+                "Indore": "Asia/Kolkata",
+                "Boston": "America/New_York",
+                "New York": "America/New_York",
+                "London": "Europe/London",
+                "Tokyo": "Asia/Tokyo",
+                "Sydney": "Australia/Sydney",
+                "Dubai": "Asia/Dubai",
+                "Paris": "Europe/Paris",
+                "UTC": "UTC"
+            };
+
+            function updateClock() {
+                const fromCity = fromCitySelect.value;
+                const toCity = toCitySelect.value;
+
+                if (!fromCity || !toCity) return;
+
+                const nowUTC = new Date();
+
+                const fromTZ = cityTimezones[fromCity] || fromCity;
+                const fromTime = new Date(nowUTC.toLocaleString("en-US", {timeZone: fromTZ}));
+
+                const toTZ = cityTimezones[toCity] || toCity;
+                const toTime = new Date(nowUTC.toLocaleString("en-US", {timeZone: toTZ}));
+
+                resultDiv.innerHTML = `
+                    <p>🕒 Current Time in <b>${fromCity}</b>: ${fromTime.toLocaleString()}</p>
+                    <p>🌍 Converted Time in <b>${toCity}</b>: ${toTime.toLocaleString()}</p>
+                `;
+            }
+
+            setInterval(updateClock, 1000);
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <h2>🌍 World Time Conversion</h2>
-        <img src="{% static 'image/RAGSAR Bio-Infotech.jpg' %}"  alt="" width="80" height="80px">
+<body onload="startLiveClock()">
 
-        <form method="POST">
-            {% csrf_token %}
+    <h1>World Time Conversion 🌍</h1>
 
-            <div class="mb-3">
-                <label class="form-label">From City:</label>
-                <select name="from_city" class="form-select">
-                    {% for city in indian_cities %}
-                        <option value="{{ city }}" {% if selected_from == city %}selected{% endif %}>{{ city }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+    <div id="logo">
+        <img src="{% static 'image/RAGSAR Bio-Infotech.jpg ' %}" alt="" width="100px" height="100px">
+    </div>
 
-            <div class="mb-3">
-                <label class="form-label">Enter Time (YYYY-MM-DD HH:MM):</label>
-                <input type="text" name="input_time" class="form-control" value="{{ current_time }}">
-            </div>
+    <form method="post">
+        {% csrf_token %}
+        <label for="from_city">From City:</label>
+        <select id="from_city" name="from_city">
+            {% for city in indian_cities %}
+                <option value="{{ city }}" {% if city == selected_from %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+        </select>
 
-            <div class="mb-3">
-                <label class="form-label">To City / Timezone:</label>
-                <select name="to_city" class="form-select">
-                    {% for city in target_cities %}
-                        <option value="{{ city }}" {% if selected_to == city %}selected{% endif %}>{{ city }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+        <label for="to_city">To City:</label>
+        <select id="to_city" name="to_city">
+            {% for city in target_cities %}
+                <option value="{{ city }}" {% if city == selected_to %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+        </select>
 
-            <button type="submit" class="btn btn-primary mt-3">Convert</button>
-        </form>
+        <label for="input_time">Input Time:</label>
+        <input type="datetime-local" id="input_time" name="input_time" value="{{ current_time }}">
 
-        {% if error_message %}
-            <div class="alert alert-danger mt-3">{{ error_message }}</div>
-        {% endif %}
+        <button type="submit">Convert</button>
+    </form>
 
+    <div id="live_result">
         {% if result_time %}
-            <div class="alert alert-success mt-3">
-                <pre>{{ result_time }}</pre>
-            </div>
+            <p>{{ result_time }}</p>
+        {% endif %}
+        {% if error_message %}
+            <p style="color:red">{{ error_message }}</p>
         {% endif %}
     </div>
 </body>

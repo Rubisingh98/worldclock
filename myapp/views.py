@@ -25,7 +25,7 @@ def index(request):
     error_message = None
     selected_from = None
     selected_to = None
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    current_time = datetime.now().strftime("%Y-%m-%dT%H:%M")  # datetime-local format
 
     if request.method == "POST":
         selected_from = request.POST.get("from_city")
@@ -33,6 +33,9 @@ def index(request):
         input_time_str = request.POST.get("input_time")
 
         try:
+            # Fix for datetime-local input
+            input_time_str = input_time_str.replace("T", " ")
+
             india_tz = pytz.timezone("Asia/Kolkata")
             input_time = datetime.strptime(input_time_str, "%Y-%m-%d %H:%M")
             localized_time = india_tz.localize(input_time)
